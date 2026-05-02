@@ -16,6 +16,9 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "DevArchitect — Built by Suken Muchammad Fauzan",
+  icons: {
+    icon: '/logo.png',
+  },
   description:
     "DevArchitect is an AI-powered project setup tool developed by Suken Muchammad Fauzan. Describe your project and get a tech stack, code, and docs in 60 seconds.",
   keywords: [
