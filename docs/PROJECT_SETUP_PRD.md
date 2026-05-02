@@ -1,4 +1,5 @@
 # PROJECT SETUP AI AGENT
+
 ## Product Requirements Document
 
 **Project Name:** DevArchitect (atau nama lain yang lu prefer)
@@ -10,18 +11,22 @@
 ## 1. PRODUCT OVERVIEW
 
 ### What It Does
+
 Developer inputs project description (3-5 sentences) → AI generates:
+
 1. **Recommended tech stack** (with justifications)
 2. **Production-ready boilerplate code** (folder structure + core files)
 3. **Complete documentation** (README + setup guide + architecture explanation)
 
 ### Who It's For
+
 - Junior developers overwhelmed by choices
 - Experienced devs who want to skip repetitive setup
 - Teams standardizing on tech stacks
 - Anyone prototyping new ideas fast
 
 ### Core Value Prop
+
 **Eliminate setup paralysis. From idea to code in 60 seconds.**
 
 ---
@@ -29,21 +34,25 @@ Developer inputs project description (3-5 sentences) → AI generates:
 ## 2. USER FLOW
 
 ### Entry Point
+
 User lands on clean page with:
+
 - Hero section: "Describe your project"
 - Large textarea: "What are you building?"
 - Optional fields: (Budget/Team size/Timeline - SKIP for MVP)
 - Submit button: "Generate My Setup"
 
 ### User Input Example
+
 ```
-I'm building a SaaS platform for team task management. 
-It needs real-time collaboration, user authentication, 
+I'm building a SaaS platform for team task management.
+It needs real-time collaboration, user authentication,
 and should scale to 10k+ users. Frontend for web and mobile.
 Backend needs webhooks for integrations.
 ```
 
 ### What Happens
+
 1. Input sent to **Agent 1 (Stack Advisor)**
 2. Stack recommendation shown (+ brief explanation)
 3. User clicks "Generate Boilerplate" → **Agent 2 (Scaffolder)** runs
@@ -53,6 +62,7 @@ Backend needs webhooks for integrations.
 7. **Final step:** User can download as ZIP or view/copy individual files
 
 ### Character Presence
+
 - Avatar at corner (anime character or simple mascot)
 - Personality in copy ("Nice choice! Here's why..." not "Stack recommendation:")
 - Loading states have personality ("Architecting your setup..." not just loading bar)
@@ -64,7 +74,9 @@ Backend needs webhooks for integrations.
 ### Three-Agent System
 
 #### **AGENT 1: Stack Advisor**
+
 **Prompt engineering focus:**
+
 ```
 You are a senior architect recommending tech stacks for projects.
 
@@ -85,6 +97,7 @@ Be opinionated but justify. Consider: scalability, team learning curve, communit
 ```
 
 **Output format (JSON):**
+
 ```json
 {
   "frontend": {
@@ -102,7 +115,9 @@ Be opinionated but justify. Consider: scalability, team learning curve, communit
 ---
 
 #### **AGENT 2: Scaffolder**
+
 **Prompt engineering focus:**
+
 ```
 Generate production-ready boilerplate code for a [PROJECT TYPE] project.
 
@@ -135,6 +150,7 @@ Output as code blocks with clear labels.
 ```
 
 **What to generate:**
+
 ```
 src/
 ├── app/
@@ -156,7 +172,9 @@ Configuration files with content
 ---
 
 #### **AGENT 3: Documenter**
+
 **Prompt engineering focus:**
+
 ```
 Create comprehensive documentation for a [PROJECT TYPE] project.
 
@@ -225,6 +243,7 @@ Frontend displays all three sections (Stack + Boilerplate + Docs)
 ### Pages/Routes
 
 #### **/ (Landing Page)**
+
 - Hero with tagline
 - Big textarea for input
 - Submit button
@@ -232,25 +251,30 @@ Frontend displays all three sections (Stack + Boilerplate + Docs)
 - Footer with character/branding
 
 #### **/result (Results Page)**
+
 Shows 3 collapsible sections:
 
 **Section 1: Your Tech Stack**
+
 - Card layout showing each decision
 - Small icons for each tech
 - Expandable explanation for each choice
 
 **Section 2: Project Structure & Code**
+
 - File tree (expandable)
 - Code blocks for each file (with syntax highlighting)
 - Copy-to-clipboard button per file
 - Download as ZIP button (ALL files)
 
 **Section 3: Documentation**
+
 - Three tabs: README / SETUP / ARCHITECTURE
 - Markdown rendered nicely
 - Copy button per section
 
 ### UI/UX Details
+
 - Clean, modern design
 - Character avatar present (top-right corner or sidebar)
 - Loading states with personality
@@ -259,7 +283,9 @@ Shows 3 collapsible sections:
 - Dark mode (optional, nice to have)
 
 ### Branding
+
 **Character:** "The Architect" (or pick a name)
+
 - Simple anime or vector art
 - Consistent across pages
 - Appears in loading states with different expressions
@@ -269,6 +295,7 @@ Shows 3 collapsible sections:
 ## 5. TECH STACK (YOUR BUILD)
 
 ### Frontend
+
 - **Framework:** Next.js 14 (App Router)
 - **Styling:** Tailwind CSS
 - **UI Components:** shadcn/ui (or minimal custom)
@@ -277,14 +304,17 @@ Shows 3 collapsible sections:
 - **Icons:** lucide-react
 
 ### Backend
+
 - **API:** Next.js API Routes
 - **AI:** Claude (via Anthropic API) or OpenRouter
 - **Async:** Built-in Promise handling
 
 ### Deployment
+
 - **Vercel** (native Next.js)
 
 ### Optional Libraries
+
 - `zustand` or `useState` for state management (keep it simple)
 - `react-hot-toast` for notifications
 - `axios` for API calls (or fetch)
@@ -294,6 +324,7 @@ Shows 3 collapsible sections:
 ## 6. MVPS & NICE-TO-HAVES
 
 ### MVP (MUST HAVE - 2 days)
+
 - ✅ Landing page with textarea
 - ✅ Three agents working (Stack + Scaffolder + Documenter)
 - ✅ Results page showing all three outputs
@@ -304,6 +335,7 @@ Shows 3 collapsible sections:
 - ✅ Demo video
 
 ### Nice-to-Haves (If Time)
+
 - 📌 Download as ZIP
 - 📌 Copy-to-clipboard buttons
 - 📌 Example projects carousel on landing
@@ -312,6 +344,7 @@ Shows 3 collapsible sections:
 - 📌 Syntax highlighting for code blocks
 
 ### Don't Build (Time Sink)
+
 - ❌ User accounts/auth
 - ❌ Save previous projects
 - ❌ Custom templates
@@ -323,9 +356,11 @@ Shows 3 collapsible sections:
 ## 7. AI INTEGRATION DETAILS
 
 ### API Choice
+
 **Recommendation: OpenRouter (allows choice of Claude/GPT-4o)**
 
 Why:
+
 - Simple API
 - Flexible model selection
 - Cost-efficient
@@ -334,15 +369,13 @@ Why:
 ### Prompt Engineering Strategy
 
 **Keep prompts:**
+
 - Specific (describe exact output format)
 - Structured (mention JSON/markdown/code blocks)
 - Constrained (max length, focus)
 
-**Model choice:**
-- Claude 3.5 Sonnet (best code generation)
-- Or GPT-4o (if you prefer)
-
 ### Error Handling
+
 - If Agent 1 fails → Show error, ask to retry
 - If Agent 2 fails → Show Agent 1 result, suggest manual scaffolding
 - If Agent 3 fails → Show first 2, offer generic documentation template
@@ -352,6 +385,7 @@ Why:
 ## 8. SUCCESS CRITERIA (For Recruitment)
 
 ### Functional
+
 - ✅ All 3 agents work reliably
 - ✅ Generated code is actually usable (not just syntactically correct)
 - ✅ Documentation is clear and complete
@@ -359,12 +393,14 @@ Why:
 - ✅ Deployment live and fast
 
 ### Design/Polish
+
 - ✅ Character/branding feels intentional
 - ✅ UI is clean and professional
 - ✅ Loading states don't feel generic
 - ✅ Error messages are helpful
 
 ### Conceptual
+
 - ✅ Multi-agent architecture is clear (not just wrapper around single agent)
 - ✅ Each agent has distinct purpose
 - ✅ Problem solved is genuine (not forced)
@@ -375,6 +411,7 @@ Why:
 ## 9. TIMELINE (2 Days)
 
 ### Day 1 (8-10 hours)
+
 - **Hour 1:** Setup Next.js project, basic structure
 - **Hour 2-3:** Landing page + basic form
 - **Hour 4-5:** API endpoint setup, test Agent 1 (Stack Advisor)
@@ -383,6 +420,7 @@ Why:
 - **Hour 8-10:** Results page layout, display all three outputs nicely
 
 ### Day 2 (6-8 hours)
+
 - **Hour 1:** Polish UI, character branding
 - **Hour 2:** Error handling + edge cases
 - **Hour 3:** Deploy to Vercel, test live
@@ -409,6 +447,7 @@ Why:
 ## 11. UNIQUE POSITIONING
 
 ### Why This Stands Out
+
 1. **Multi-agent architecture** - Not a single-agent wrapper
 2. **Genuinely useful** - Solves real developer pain
 3. **Broad appeal** - Any dev can use it
@@ -416,6 +455,7 @@ Why:
 5. **Character integration** - Personality throughout, not just mascot
 
 ### How It's Different from Resume Roaster
+
 - **Resume Roaster:** Takes input → gives feedback (single purpose)
 - **DevArchitect:** Takes input → coordinates 3 specialized agents with different outputs → user gets complete product
 - **Signal:** You understand how to decompose problems into agent responsibilities

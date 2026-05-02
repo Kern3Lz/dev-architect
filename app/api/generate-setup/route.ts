@@ -5,27 +5,79 @@ import {
   DOCUMENTER_PROMPT,
 } from "@/lib/prompts";
 
-const API_KEY = process.env.OPENROUTER_API_KEY || process.env.ANTHROPIC_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-async function fetchWithTimeout(
-  url: string,
-  options: RequestInit,
-  timeoutMs = 45000,
-) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+// Gemini 2.5 Flash Lite: 10 RPM, 250K TPM, 20 RPD
+const PRIMARY_MODEL = "gemini-2.5-flash-lite";
+const FALLBACK_MODEL = "gemini-2.5-flash";
 
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
+function getGeminiUrl(model: string): string {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+}
+
+async function callGemini(prompt: string, maxTokens: number): Promise<string> {
+  const models = [PRIMARY_MODEL, FALLBACK_MODEL];
+
+  for (let i = 0; i < models.length; i++) {
+    const model = models[i];
+    console.log(`[Agent] Trying model: ${model}...`);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 90000);
+
+    try {
+      const response = await fetch(getGeminiUrl(model), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: prompt }],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: maxTokens,
+          },
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.status === 429 && i < models.length - 1) {
+        console.warn(`Model ${model} rate-limited, trying fallback...`);
+        continue;
+      }
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error(`Gemini API error (${model}):`, errText);
+        if (i < models.length - 1) continue;
+        throw new Error(`Gemini API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!text) {
+        throw new Error(`No content returned from ${model}`);
+      }
+
+      console.log(`[Agent] Success with ${model}`);
+      return text;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (i < models.length - 1) {
+        console.warn(`Model ${model} failed, trying fallback...`);
+        continue;
+      }
+      throw error;
+    }
   }
+
+  throw new Error("All models exhausted");
 }
 
 export async function POST(request: NextRequest) {
@@ -41,52 +93,24 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!API_KEY) {
+  if (!GEMINI_API_KEY) {
     return NextResponse.json(
-      { error: "API key not configured." },
+      { error: "GEMINI_API_KEY not configured." },
       { status: 500 },
     );
   }
 
   try {
+    // ═══════════════════════════════════════
     // Agent 1: Stack Advisor
-    const stackResponse = await fetchWithTimeout(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          // model: "meta-llama/llama-3.3-70b-instruct:free",
-          model: "openrouter/free",
-          messages: [
-            {
-              role: "user",
-              content: STACK_ADVISOR_PROMPT(projectDescription),
-            },
-          ],
-          temperature: 0.7,
-          max_tokens: 1500,
-        }),
-      },
+    // ═══════════════════════════════════════
+    console.log("\n🏗️  Agent 1: Stack Advisor starting...");
+    const stackContent = await callGemini(
+      STACK_ADVISOR_PROMPT(projectDescription),
+      1500,
     );
 
-    if (!stackResponse.ok) {
-      const errText = await stackResponse.text();
-      console.error("Stack API error:", errText);
-      throw new Error(`Stack API error: ${stackResponse.statusText}`);
-    }
-
-    const stackData = await stackResponse.json();
-    const stackContent = stackData.choices?.[0]?.message?.content;
-
-    if (!stackContent) {
-      throw new Error("No stack content returned");
-    }
-
-    // Parse stack JSON (find { and } to ensure no markdown text breaks it)
+    // Parse stack JSON
     let stack;
     try {
       const jsonStr = stackContent.substring(
@@ -101,71 +125,37 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    // Run Scaffolder and Documenter in parallel to save time
-    const [boilerplateResponse, docResponse] = await Promise.all([
-      // Agent 2: Scaffolder
-      fetchWithTimeout("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          // model: "qwen/qwen3-coder:free",
-          model: "openrouter/free",
-          messages: [
-            {
-              role: "user",
-              content: SCAFFOLDER_PROMPT(projectDescription, stack),
-            },
-          ],
-          temperature: 0.7,
-          max_tokens: 4000,
-        }),
-      }),
-
-      // Agent 3: Documenter
-      fetchWithTimeout("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          // model: "meta-llama/llama-3.3-70b-instruct:free",
-          model: "openrouter/free",
-          messages: [
-            {
-              role: "user",
-              content: DOCUMENTER_PROMPT(
-                projectDescription,
-                stack,
-                "Will be generated",
-              ),
-            },
-          ],
-          temperature: 0.7,
-          max_tokens: 3000,
-        }),
-      }),
-    ]);
-
+    // ═══════════════════════════════════════
+    // Agent 2: Scaffolder (must run first)
+    // ═══════════════════════════════════════
+    console.log("\n💻 Agent 2: Scaffolder starting...");
     let boilerplate = "Failed to generate boilerplate.";
-    if (boilerplateResponse.ok) {
-      const boilerplateData = await boilerplateResponse.json();
-      boilerplate =
-        boilerplateData.choices?.[0]?.message?.content || boilerplate;
-    } else {
-      console.error("Boilerplate API error:", await boilerplateResponse.text());
+    try {
+      boilerplate = await callGemini(
+        SCAFFOLDER_PROMPT(projectDescription, stack),
+        6000,
+      );
+    } catch (err) {
+      console.error("Scaffolder error:", err);
     }
 
+    // ═══════════════════════════════════════
+    // Agent 3: Documenter (uses real boilerplate from Agent 2)
+    // ═══════════════════════════════════════
+    console.log("\n📚 Agent 3: Documenter starting...");
     let docContent = "Failed to generate documentation.";
-    if (docResponse.ok) {
-      const docData = await docResponse.json();
-      docContent = docData.choices?.[0]?.message?.content || docContent;
-    } else {
-      console.error("Doc API error:", await docResponse.text());
+    try {
+      // Pass the real boilerplate so folder structure & files are consistent
+      const boilerplateSummary = boilerplate.slice(0, 3000); // trim to avoid prompt overflow
+      docContent = await callGemini(
+        DOCUMENTER_PROMPT(projectDescription, stack, boilerplateSummary),
+        8000,
+      );
+    } catch (err) {
+      console.error("Documenter error:", err);
     }
+
+    console.log("✅ All agents completed!\n");
 
     return NextResponse.json({
       stack,
