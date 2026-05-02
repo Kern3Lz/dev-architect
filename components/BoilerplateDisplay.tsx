@@ -129,7 +129,7 @@ export default function BoilerplateDisplay({ boilerplate }: BoilerplateDisplayPr
             {expandedFiles[i] && (
               <div className="border-t border-slate-800 animate-slide-down">
                 <div className="p-4 md:p-6 text-slate-300 font-mono text-sm overflow-x-auto custom-scrollbar">
-                  <CodeBlock code={file.content} language={file.language} />
+                  <CodeBlock code={file.content} />
                 </div>
               </div>
             )}

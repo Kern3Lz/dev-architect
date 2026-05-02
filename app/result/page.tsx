@@ -25,6 +25,7 @@ export default function ResultPage() {
 
   // Use useEffect to read sessionStorage on client to prevent hydration mismatch
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
     const result = sessionStorage.getItem('setupResult')
     if (result) {

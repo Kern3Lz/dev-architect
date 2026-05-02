@@ -22,7 +22,7 @@ const highlightCode = (code: string) => {
   return highlighted;
 };
 
-export default function CodeBlock({ code, language, className = '' }: { code: string, language?: string, className?: string }) {
+export default function CodeBlock({ code, className = '' }: { code: string, className?: string }) {
   return (
     <pre className={`text-sm overflow-x-auto ${className}`}>
       <code 

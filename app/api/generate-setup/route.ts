@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+
+// Allow up to 60 seconds for the Vercel Serverless Function to execute the 3 AI agents
+export const maxDuration = 60;
 import {
   STACK_ADVISOR_PROMPT,
   SCAFFOLDER_PROMPT,
